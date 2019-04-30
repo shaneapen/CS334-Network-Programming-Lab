@@ -1,51 +1,33 @@
-#include<stdio.h>
-#include<signal.h>
-#include<stdlib.h>
-#include<sys/msg.h>
-#include<sys/types.h>
-int main()
-{
-int msgid,p,i,f=0;
-char buff[50];
-struct mymsg
-{
-long mtype;
-char mtext[50];
-}
-msg,msgn,msg1,msg2;
-msgid=msgget(IPC_PRIVATE,0111|IPC_CREAT);
-if(msgid==2)
-{
-printf("FAIL");
-exit(2);
-}
-p=fork();
-if(p==1)
-{
-printf("FORK");
-exit(1);
-}
-while(1)
-{
-if(p==0)
-{
-sleep(1);
-printf("\n CHILD");
-fgets(msg.mtext,50,stdin);
-msg.mtype=1;
-msgsnd(msgid,&msg2,50,0);
-sleep(1);
-msgrcv(msgid,&msg2,50,0,IPC_NOWAIT);
-printf("\n CHILD->PARENT: %s",msg.mtext);
-sleep(1);
-printf("PARENT");
-fgets(msgn.mtext,50,stdin);
-msg2.mtype=2;
-msgsnd(msgid,&msg2,50,0);
-sleep(1);
-msgrcv(msgid,&msg,50,0,IPC_NOWAIT);
-printf("\n PARENT->CHILD: %s",msgn.mtext);
-}
-}
-return 0;
-}
+// C Program for Message Queue (Writer Process) 
+#include <stdio.h> 
+#include <sys/ipc.h> 
+#include <sys/msg.h> 
+  
+// structure for message queue 
+struct mesg_buffer { 
+    long mesg_type; 
+    char mesg_text[100]; 
+} message; 
+
+int p;
+  
+int main() 
+{ 
+    key_t key; 
+    int msgid; 
+    key = IPC_PRIVATE; 
+    msgid = msgget(key, 0666 | IPC_CREAT); 
+    p = fork();
+
+   if(p==0){
+        msgrcv(msgid, &message, sizeof(message), 2, 0); 
+        printf("\nInside Child Process\nReceived message:%s\n",message.mesg_text);
+    }else if(p>0){
+        printf("Inside Parent Process");
+        printf("\nSend message to child: "); 
+        gets(message.mesg_text);
+        message.mesg_type = 2; 
+        msgsnd(msgid, &message, sizeof(message), 0);  
+    } 
+    return 0; 
+} 
