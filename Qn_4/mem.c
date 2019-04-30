@@ -1,23 +1,27 @@
 #include<stdio.h>
-#include<sys/types.h>
-#include<sys/stat.h>
 #include<sys/ipc.h>
 #include<sys/shm.h>
-int main(int argc,char *argv[])
-{
-int p;
-char *shm,*shm2;
-int shmid;
-key_t key;
-key=IPC_PRIVATE;
-shmid=shmget(key,1000,0666|IPC_CREAT);
-p=fork();
-if(p==0)
-printf("Shared memory=%d \n",shmid);
-shm=(char *)shmat(shmid,0,0);
-if(p>0)
-printf("shared memory(parent)=%d \n",shmid);
-sprintf(shm,"running \n");
-printf("Shared memory content:PROCESS:%s",shm);
-return 0;
+int main(){
+    int p;
+    char *str;
+    int shmid;
+    key_t key;
+    //generare unique key. You can also use ftok('filename',id) to generate key 
+    key = IPC_PRIVATE;
+    shmid = shmget(key,1000,0666|IPC_CREAT);     //shmget(key,size,flag)
+    p = fork();
+    str = (char *)shmat(shmid,0,0);
+
+    if(p==0){
+        printf("\nInside Child Process\nShared memory id:%d\nShared memory content: %s\n",shmid,str);
+         
+        shmdt(str);     //detach from shared memory  
+        shmctl(shmid,IPC_RMID,NULL);  // destroy the shared memory 
+     
+    }else if(p>0){
+        sprintf(str,"HELLO WORLD"); //sprintf is used to write string to a variable
+        printf("\nInside Parent Process\nShared memory id:%d\nShared memory content: %s\n",shmid,str);
+    }
+
+    return 0;
 }
